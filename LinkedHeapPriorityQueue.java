@@ -444,7 +444,43 @@ public class LinkedHeapPriorityQueue<K,V>
 
     public void swap(Position<Entry<K, V>> i, Position<Entry<K, V>> j)
     {
+        if(i == j) return;
+        if(isRoot(j)) swap(j,i);
+        boolean iIsRoot = isRoot(i);
 
+        Position<Entry<K, V>> pi = parent(i);
+        Position<Entry<K, V>> li = right(i);
+        Position<Entry<K, V>> ri = left(i);
+
+        if (left(j) != null)
+            ((Node)(left(j))).setParent((Node)i);
+        if (right(j) != null)
+            ((Node)(right(j))).setParent((Node)i);
+        if (left(parent(j)) == j)
+            ((Node)(j)).setLeft((Node)i);
+        else
+            ((Node)(j)).setRight((Node)i);
+
+        ((Node)i).setParent((Node)parent(j));
+        ((Node)i).setLeft((Node)left(j));
+        ((Node)i).setRight((Node)right(j));
+
+        ((Node)j).setParent((Node)pi);
+        ((Node)j).setLeft((Node)li);
+        ((Node)j).setRight((Node)ri);
+
+        ((Node)li).setParent((Node)j);
+        ((Node)ri).setParent((Node)j);
+
+        if(!iIsRoot)
+        {
+            if (left(pi) == i)
+                ((Node) pi).setLeft((Node) j);
+            else
+                ((Node) pi).setRight((Node) j);
+        }
+        else
+            root = j;
     }
 
     public void upheap(Position<Entry<K, V>> p) {
