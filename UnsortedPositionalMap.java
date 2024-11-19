@@ -309,4 +309,20 @@ public class UnsortedPositionalMap<K,V> extends AbstractMap<K, V>
                 return pos;
         return null;
     }
+
+    public static void main(String[] args) {
+        LinkedHeapPriorityQueue<Integer,Integer> lhpq =
+            new LinkedHeapPriorityQueue<>();
+
+        for (int i = 0; i < 64; i++) {
+            lhpq.insert(i,i);
+        }
+
+        int[] arr = new int[64];
+        for (int i = 0; i < 64; i++) {
+            arr[i] = lhpq.removeMin().getValue();
+        }
+
+        System.out.println(arr);
+    }
 }
