@@ -16,7 +16,7 @@ public class TernaryHeapPriorityQueue<K, V> extends AbstractPriorityQueue<K, V>
         heapify();
     }
 
-    protected int parent(int j) { return (j - 1) / 2; }
+    protected int parent(int j) { return (j - 1) / 3; }
 
     protected int left(int j) { return 3 * j + 1; }
     protected int mid(int j) { return 3 * j + 2; }

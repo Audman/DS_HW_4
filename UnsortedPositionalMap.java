@@ -324,5 +324,7 @@ public class UnsortedPositionalMap<K,V> extends AbstractMap<K, V>
         }
 
         System.out.println(arr);
+        // IllegalArgumentException 👍
+        // Anyway, it's already too late
     }
 }
