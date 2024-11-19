@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Comparator;
 
 import java.util.Iterator;
@@ -107,226 +108,149 @@ abstract class AbstractPriorityQueue<K, V> implements PriorityQueue<K, V> {
 
 }
 
-class LinkedPositionalList<E> implements PositionalList<E> {
-    private static class Node<E> implements Position<E> {
-        private E element;
-        private Node<E> prev;
-        private Node<E> next;
-        
-        public Node(E e, Node<E> p, Node<E> n) {
-            element = e;
-            prev = p;
-            next = n;
-        }
-        
-        public E getElement() throws IllegalStateException {
-            if (next == null)
-                throw new IllegalStateException("Position no longer valid");
-            return element;
-        }
+class HeapPriorityQueue<K, V> extends AbstractPriorityQueue<K, V> {
 
-        public Node<E> getPrev() {
-            return prev;
-        }
+    protected ArrayList<Entry<K, V>> heap = new ArrayList<>();
 
-        public Node<E> getNext() { return next; }
-
-        public void setElement(E e) { element = e; }
-
-        public void setPrev(Node<E> p) { prev = p; }
-
-        public void setNext(Node<E> n) { next = n; }
+    public HeapPriorityQueue() {
+        super();
     }
 
-    private Node<E> header;
-    private Node<E> trailer;
-
-    private int size = 0;
-
-    public LinkedPositionalList() {
-        header = new Node<>(null, null, null);
-        trailer = new Node<>(null, header, null);
-        header.setNext(trailer);
+    public HeapPriorityQueue(Comparator<K> comp) {
+        super(comp);
     }
 
-    private Node<E> validate(Position<E> p) throws IllegalArgumentException {
-        if (!(p instanceof Node)) throw new IllegalArgumentException("Invalid p");
-        Node<E> node = (Node<E>) p;
-        if (node.getNext() == null)
-            throw new IllegalArgumentException("p is no longer in the list");
-        return node;
+    public HeapPriorityQueue(K[] keys, V[] values) {
+        super();
+        for (int j = 0; j < Math.min(keys.length, values.length); j++)
+            heap.add(new PQEntry<>(keys[j], values[j]));
+        heapify();
     }
 
-    private Position<E> position(Node<E> node) {
-        if (node == header || node == trailer)
-            return null;
-        return node;
+    protected int parent(int j) {
+        return (j - 1) / 2;
     }
 
-    public int size() { return size; }
-
-    public boolean isEmpty() { return size == 0; }
-
-    public Position<E> first() {
-        return position(header.getNext());
+    protected int left(int j) {
+        return 2 * j + 1;
     }
 
-    public Position<E> last() {
-        return position(trailer.getPrev());
+    protected int right(int j) {
+        return 2 * j + 2;
     }
 
-    public Position<E> before(Position<E> p) throws IllegalArgumentException {
-        Node<E> node = validate(p);
-        return position(node.getPrev());
+    protected boolean hasLeft(int j) {
+        return left(j) < heap.size();
     }
 
-    public Position<E> after(Position<E> p) throws IllegalArgumentException {
-        Node<E> node = validate(p);
-        return position(node.getNext());
+    protected boolean hasRight(int j) {
+        return right(j) < heap.size();
     }
 
-    private Position<E> addBetween(E e, Node<E> pred, Node<E> succ) {
-        Node<E> newest = new Node<>(e, pred, succ);
-        pred.setNext(newest);
-        succ.setPrev(newest);
-        size++;
-        return newest;
+    protected void swap(int i, int j) {
+        Entry<K, V> temp = heap.get(i);
+        heap.set(i, heap.get(j));
+        heap.set(j, temp);
     }
 
-    public Position<E> addFirst(E e) {
-        return addBetween(e, header, header.getNext());
-    }
-
-    public Position<E> addLast(E e) {
-        return addBetween(e, trailer.getPrev(), trailer);
-    }
-
-    public Position<E> addBefore(Position<E> p, E e)
-        throws IllegalArgumentException {
-        Node<E> node = validate(p);
-        return addBetween(e, node.getPrev(), node);
-    }
-
-    public Position<E> addAfter(Position<E> p, E e)
-        throws IllegalArgumentException {
-        Node<E> node = validate(p);
-        return addBetween(e, node, node.getNext());
-    }
-
-    public E set(Position<E> p, E e) throws IllegalArgumentException {
-        Node<E> node = validate(p);
-        E answer = node.getElement();
-        node.setElement(e);
-        return answer;
-    }
-
-    public E remove(Position<E> p) throws IllegalArgumentException {
-        Node<E> node = validate(p);
-        Node<E> predecessor = node.getPrev();
-        Node<E> successor = node.getNext();
-        predecessor.setNext(successor);
-        successor.setPrev(predecessor);
-        size--;
-        E answer = node.getElement();
-        node.setElement(null);
-        node.setNext(null);
-        node.setPrev(null);
-        return answer;
-    }
-
-    private class PositionIterator implements Iterator<Position<E>> {
-
-        private Position<E> cursor = first();
-
-        private Position<E> recent = null;
-
-        public boolean hasNext() { return (cursor != null);  }
-
-        public Position<E> next() throws NoSuchElementException {
-            if (cursor == null) throw new NoSuchElementException("nothing left");
-            recent = cursor;
-            cursor = after(cursor);
-            return recent;
-        }
-
-        public void remove() throws IllegalStateException {
-            if (recent == null) throw new IllegalStateException("nothing to remove");
-            LinkedPositionalList.this.remove(recent);
-            recent = null;
+    protected void upHeap(int j) {
+        while (j > 0) { // continue until reaching root (or break statement)
+            int p = parent(j);
+            if (compare(heap.get(j), heap.get(p)) >= 0)
+                break; // heap property verified
+            swap(j, p);
+            j = p; // continue from the parent's location
         }
     }
 
-    private class PositionIterable implements Iterable<Position<E>> {
-        public Iterator<Position<E>> iterator() { return new PositionIterator(); }
-    }
-
-    public Iterable<Position<E>> positions() {
-        return new PositionIterable();
-    }
-
-    private class ElementIterator implements Iterator<E> {
-        Iterator<Position<E>> posIterator = new PositionIterator();
-        public boolean hasNext() { return posIterator.hasNext(); }
-        public E next() { return posIterator.next().getElement(); }
-        public void remove() { posIterator.remove(); }
-    }
-
-    public Iterator<E> iterator() { return new ElementIterator(); }
-
-    public String toString() {
-        StringBuilder sb = new StringBuilder("(");
-        Node<E> walk = header.getNext();
-        while (walk != trailer) {
-            sb.append(walk.getElement());
-            walk = walk.getNext();
-            if (walk != trailer)
-                sb.append(", ");
+    protected void downHeap(int j) {
+        while (hasLeft(j)) {
+            int leftIndex = left(j);
+            int smallChildIndex = leftIndex;
+            if (hasRight(j)) {
+                int rightIndex = right(j);
+                if (compare(heap.get(leftIndex), heap.get(rightIndex)) > 0)
+                    smallChildIndex = rightIndex;
+            }
+            if (compare(heap.get(smallChildIndex), heap.get(j)) >= 0)
+                break;
+            swap(j, smallChildIndex);
+            j = smallChildIndex;
         }
-        sb.append(")");
-        return sb.toString();
     }
-}
 
-class SortedPriorityQueue<K, V> extends AbstractPriorityQueue<K, V> {
+    protected void downheap(int j) {
+        if (!hasLeft(j))
+            return;
 
-    private PositionalList<Entry<K, V>> list = new LinkedPositionalList<>();
+        int leftIndex = left(j);
+        int small = leftIndex;
 
-    public SortedPriorityQueue() { super(); }
+        if (hasRight(j)) {
+            int rightIndex = right(j);
+            if (compare(heap.get(leftIndex), heap.get(rightIndex)) > 0)
+                small = rightIndex;
+        }
+        if (compare(heap.get(small), heap.get(j)) >= 0)
+            return;
+        swap(j, small);
+        j = small;
 
-    public SortedPriorityQueue(Comparator<K> comp) { super(comp); }
+        downheap(j);
+    }
 
-    public Entry<K, V> insert(K key, V value) throws IllegalArgumentException {
-        checkKey(key);
-        Entry<K, V> newest = new PQEntry<>(key, value);
-        Position<Entry<K, V>> walk = list.last();
+    protected void heapify() {
+        int startIndex = parent(size() - 1); // start at PARENT of last entry
+        for (int j = startIndex; j >= 0; j--) // loop until processing the root
+            downHeap(j);
+    }
 
-        while (walk != null && compare(newest, walk.getElement()) < 0)
-            walk = list.before(walk);
-        if (walk == null)
-            list.addFirst(newest);
-        else
-            list.addAfter(walk, newest);
-        return newest;
+    public int size() {
+        return heap.size();
     }
 
     public Entry<K, V> min() {
-        if (list.isEmpty()) return null;
-        return list.first().getElement();
+        if (heap.isEmpty())
+            return null;
+        return heap.get(0);
+    }
+
+    public Entry<K, V> insert(K key, V value) throws IllegalArgumentException {
+        checkKey(key); // auxiliary key-checking method (could throw exception)
+        Entry<K, V> newest = new PQEntry<>(key, value);
+
+        heap.add(newest); // add to the end of the list
+        upHeap(heap.size() - 1); // upheap newly added entry
+        return newest;
     }
 
     public Entry<K, V> removeMin() {
-        if (list.isEmpty()) return null;
-        return list.remove(list.first());
+        if (heap.isEmpty())
+            return null;
+        Entry<K, V> answer = heap.get(0);
+        swap(0, heap.size() - 1); // put minimum item at the end
+        heap.remove(heap.size() - 1); // and remove it from the list;
+        downHeap(0); // then fix new root
+        return answer;
     }
 
-    public int size() { return list.size(); }
+    private void sanityCheck() {
+        for (int j = 0; j < heap.size(); j++) {
+            int left = left(j);
+            int right = right(j);
+            if (left < heap.size() && compare(heap.get(left), heap.get(j)) < 0)
+                System.out.println("Invalid left child relationship");
+            if (right < heap.size() && compare(heap.get(right), heap.get(j)) < 0)
+                System.out.println("Invalid right child relationship");
+        }
+    }
 }
 
 public class PriorityQueueStack<E> implements Stack<E>
 {
-    PriorityQueue<Integer, E> pq;
+    HeapPriorityQueue<Integer, E> pq;
 
-    public PriorityQueueStack() { pq = new SortedPriorityQueue<>(); }
+    public PriorityQueueStack() { pq = new HeapPriorityQueue<>(); }
 
     // O(1), it returns an integer
     public int size() { return pq.size(); }
@@ -334,16 +258,14 @@ public class PriorityQueueStack<E> implements Stack<E>
     // O(1), it returns a boolean
     public boolean isEmpty() { return pq.isEmpty(); }
 
-    // Adds an entry with the highest priority on the moment of adding,
-    // negative size is an easy way
-    // O(n), it relies on SortedPriorityQueue.insert which is O(n)
+    // Adds an entry with the highest priority on the moment of adding, negative size is an easy way
+    // O(log n), it can do up to log(n) upheaps
     public void push(E e) { pq.insert(-pq.size(), e); }
 
-    // O(1), it just returns an E
+    // O(1), it just returns the root
     public E top() { return pq.min().getValue(); }
 
-    // O(1), it relies on SortedPriorityQueue.removeMin which is O(1)
-    // Unsorted one would be O(n)
+    // O(logn), it can do up to log(n) downheaps
     public E pop() { return pq.removeMin().getValue(); }
 
     public static void main(String[] args)

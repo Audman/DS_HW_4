@@ -433,20 +433,26 @@ public class LinkedHeapPriorityQueue<K,V>
     implements PriorityQueue<K,V>
 {
     private Comparator<K> comp;
+    Position<Entry<K,V>> root;
 
-    public LinkedHeapPriorityQueue() { comp = new DefaultComparator<>(); }
+    public LinkedHeapPriorityQueue() { super(); }
+
+    public LinkedHeapPriorityQueue(Comparator<K> _comp) {
+        super();
+        comp = _comp;
+    }
 
     public void swap(Position<Entry<K, V>> i, Position<Entry<K, V>> j)
     {
 
     }
 
-    public void upheap(Position<Entry<K, V>> p)
-    {
+    public void upheap(Position<Entry<K, V>> p) {
         while ( !isRoot(p) )
         {
             Position<Entry<K, V>> k = parent(p);
             if (comp.compare(p.getElement().getKey(), k.getElement().getKey()) >= 0) break;
+
             swap(p, k);
             p = k;
         }
@@ -474,14 +480,22 @@ public class LinkedHeapPriorityQueue<K,V>
         downheap(p);
     }
 
-    public ArrayList<Character> pathTo(int i)
-    {
-        return null;
+    public ArrayList<Character> pathTo(int i) {
+        ArrayList<Character> arrayList = new ArrayList<>();
+        while (i > 0)
+        {
+            arrayList.addFirst((i--)%2==1? 'r' : 'l');
+            i/=2;
+        }
+        return arrayList;
     }
 
-    public Position<Entry<K, V>> getPositionAt(ArrayList<Character> list)
-    {
-        return null;
+    public Position<Entry<K, V>> getPositionAt(ArrayList<Character> list) {
+        Position<Entry<K,V>> walk = root();
+        for(Character c: list)
+            walk = c == 'l' ? this.left(walk) : this.right(walk);
+
+        return walk;
     }
 
     public Entry<K, V> insert(K key, V value) throws IllegalArgumentException {
@@ -489,10 +503,14 @@ public class LinkedHeapPriorityQueue<K,V>
     }
 
     public Entry<K, V> min() {
-        return null;
+        if (isEmpty()) return null;
+        return root().getElement();
     }
 
     public Entry<K, V> removeMin() {
-        return null;
+        Entry<K,V> returnValue = min();
+        swap(root, getPositionAt(pathTo(size())));
+        remove(getPositionAt(pathTo(size())));
+        return returnValue;
     }
 }
