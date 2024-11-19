@@ -278,24 +278,20 @@ public class UnsortedPositionalMap<K,V> extends AbstractMap<K, V>
 
     public V put(K key, V value)
     {
-        V returnValue = null;
         Position<Entry<K,V>> pos = findKey(key);
+        V returnValue = null;
 
-        if (pos == null)
-        {
-            // add new entry
-        }
-        else
-        {
-            returnValue = pos.getElement().getValue();
-            // modify the entry
-        }
+        if (pos != null)
+            returnValue = lpl.remove(pos).getValue();
+
+        lpl.addLast(new MapEntry<>(key, value));
+
         return returnValue;
     }
 
     public V remove(K key)
     {
-        return null;
+        return lpl.remove(findKey(key)).getValue();
     }
 
     public Iterable<Entry<K,V>> entrySet()
