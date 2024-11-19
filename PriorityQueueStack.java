@@ -2,7 +2,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 interface Position<E> {
     E getElement() throws IllegalStateException;

@@ -544,6 +544,7 @@ public class LinkedHeapPriorityQueue<K,V>
         {
             throw new IllegalArgumentException("Incompatible key");
         }
+        // End CheckKey
 
         Entry<K,V> newest = new AbstractPriorityQueue.PQEntry(key,value);
 
@@ -558,6 +559,8 @@ public class LinkedHeapPriorityQueue<K,V>
             else
                 addLeft(freeNode, newest);
         }
+
+        upheap(getPositionAt(pathTo(size()-1)));
 
         return newest;
     }

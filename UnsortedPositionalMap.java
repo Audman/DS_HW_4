@@ -1,5 +1,3 @@
-import com.sun.source.doctree.EntityTree;
-
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -296,7 +294,12 @@ public class UnsortedPositionalMap<K,V> extends AbstractMap<K, V>
 
     public Iterable<Entry<K,V>> entrySet()
     {
-        return null;
+        // Ideally it should return a copy/clone of it, but it is what it is.
+        //
+        // It's memory efficient,
+        // it's Iterable<Entry<K,V>>,
+        // it works! (theoretically)
+        return lpl;
     }
 
     public Position<Entry<K,V>> findKey(K key)
