@@ -535,7 +535,31 @@ public class LinkedHeapPriorityQueue<K,V>
     }
 
     public Entry<K, V> insert(K key, V value) throws IllegalArgumentException {
-        return null;
+        // CheckKey
+        try
+        {
+            assert comp.compare(key, key) == 0;
+        }
+        catch (Exception e)
+        {
+            throw new IllegalArgumentException("Incompatible key");
+        }
+
+        Entry<K,V> newest = new AbstractPriorityQueue.PQEntry(key,value);
+
+        if (size() == 0) {
+            addRoot(newest);
+        }
+        else {
+            Position<Entry<K, V>> freeNode = getPositionAt(pathTo(size() / 2));
+
+            if (size() % 2 == 0)
+                addRight(freeNode, newest);
+            else
+                addLeft(freeNode, newest);
+        }
+
+        return newest;
     }
 
     public Entry<K, V> min() {
@@ -543,10 +567,14 @@ public class LinkedHeapPriorityQueue<K,V>
         return root().getElement();
     }
 
-    public Entry<K, V> removeMin() {
+    public Entry<K, V> removeMin()
+    {
         Entry<K,V> returnValue = min();
+
         swap(root, getPositionAt(pathTo(size())));
         remove(getPositionAt(pathTo(size())));
+        downheap(root);
+
         return returnValue;
     }
 }
